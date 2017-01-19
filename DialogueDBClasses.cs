@@ -58,6 +58,11 @@ namespace Mistral.UniDialogue
         /// </summary>
         /// <returns>The entry type.</returns>
         public abstract EntryType GetEntryType ();
+		
+		public DialogueDBEntry ()
+		{
+			ID = -1;
+		}
 	}
 
 	public class ConversationEntry : DialogueDBEntry
@@ -88,7 +93,7 @@ namespace Mistral.UniDialogue
 		/// <summary>
 		/// Default Constructor
 		/// </summary>
-		public ConversationEntry ()
+		public ConversationEntry () : base()
 		{
 			
 		}
@@ -129,7 +134,7 @@ namespace Mistral.UniDialogue
 		/// <summary>
 		/// Default Constructor
 		/// </summary>
-		public ExecutionEntry ()
+		public ExecutionEntry () : base()
 		{
 			
 		}
@@ -176,7 +181,7 @@ namespace Mistral.UniDialogue
 		/// <summary>
 		/// Default Constructor
 		/// </summary>
-		public ConditionEntry ()
+		public ConditionEntry () : base()
 		{
 			
 		}
@@ -222,7 +227,7 @@ namespace Mistral.UniDialogue
 		/// <summary>
 		/// Default Constrcutor
 		/// </summary>
-		public ContentEntry ()
+		public ContentEntry () : base()
 		{
 			
 		}
@@ -479,22 +484,22 @@ namespace Mistral.UniDialogue
 			ConditionEntry _maxConditionEntry = _connection.Query<ConditionEntry>("SELECT *, MAX(ID) FROM ConditionEntry")[0];
 			
 			///And then set the IDs to the Manager. If a table is empty, then set the start ID. 
-			if (_maxConversationEntry != null)
+			if (_maxConversationEntry.ID != 0)
 				NextConversationID = _maxConversationEntry.ID + 1;
 			else
 				NextConversationID = 1;
 			
-			if (_maxContentEntry != null)
+			if (_maxContentEntry.ID != 0)
 				NextContentID = _maxContentEntry.ID + 10;
 			else
 				NextContentID = 1;
 			
-			if (_maxExecutionEntry != null)
+			if (_maxExecutionEntry.ID != 0)
 				NextExecutionID = _maxExecutionEntry.ID + 10;
 			else
 				NextExecutionID = 2;
 			
-			if (_maxConditionEntry != null)
+			if (_maxConditionEntry.ID != 0)
 				NextConditionID = _maxConditionEntry.ID + 10;
 			else
 				NextConditionID = 3;
@@ -504,7 +509,7 @@ namespace Mistral.UniDialogue
 		
 		#region Insert Methods
 		
-		public bool InsertConversationEntry (string cname, int startID)
+		public void InsertConversationEntry (string cname, int startID)
 		{
 			ConversationEntry toInsert = new ConversationEntry(NextConversationID, cname, startID);
 			try
@@ -513,15 +518,15 @@ namespace Mistral.UniDialogue
 			}
 			catch (SQLiteException sex)
 			{
-				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. ");
-				return false;
+				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. "
+					+ "The Result is: " + sex.Result
+					+ "The Message is: " + sex.Message);
 				throw;
 			}
 			NextConversationID++;
-			return true;
 		}
 		
-		public bool InsertContentEntry (string aname, string cname, int nextID)
+		public void InsertContentEntry (string aname, string cname, int nextID)
 		{
 			ContentEntry toInsert = new ContentEntry(NextContentID, aname, cname, nextID);
 			try
@@ -530,15 +535,15 @@ namespace Mistral.UniDialogue
 			}
 			catch (SQLiteException sex)
 			{
-				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. ");
-				return false;
+				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. "
+					+ "The Result is: " + sex.Result
+					+ "The Message is: " + sex.Message);
 				throw;
 			}
 			NextContentID += 10;
-			return true;
 		}
 		
-		public bool InsertExecutionEntry (string ycode, int nextID)
+		public void InsertExecutionEntry (string ycode, int nextID)
 		{
 			ExecutionEntry toInsert = new ExecutionEntry(NextExecutionID, ycode, nextID);
 			try
@@ -547,15 +552,15 @@ namespace Mistral.UniDialogue
 			}
 			catch (SQLiteException sex)
 			{
-				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. ");
-				return false;
+				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. "
+					+ "The Result is: " + sex.Result
+					+ "The Message is: " + sex.Message);
 				throw;
 			}
 			NextExecutionID += 10;
-			return true;
 		}
 		
-		public bool InsertConditionEntry (string ycode, int sucID, int nextID)
+		public void InsertConditionEntry (string ycode, int sucID, int nextID)
 		{
 			ConditionEntry toInsert = new ConditionEntry(NextConditionID, ycode, sucID, nextID);
 			try
@@ -564,12 +569,12 @@ namespace Mistral.UniDialogue
 			}
 			catch (SQLiteException sex)
 			{
-				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. ");
-				return false;
+				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. "
+					+ "The Result is: " + sex.Result
+					+ "The Message is: " + sex.Message);
 				throw;
 			}
 			NextConditionID += 10;
-			return true;
 		}
 		
 		#endregion
