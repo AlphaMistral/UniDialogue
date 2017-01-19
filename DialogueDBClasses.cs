@@ -49,7 +49,7 @@ namespace Mistral.UniDialogue
         /// <summary>
         /// The Primary ID Key for the Entry. If set to 0, it means End. 
         /// </summary>
-        /// <value>The I.</value>
+        /// <value>The ID.</value>
 		[PrimaryKey]
 		public int ID { get; set; }
 
@@ -117,7 +117,12 @@ namespace Mistral.UniDialogue
 			ExecutionCode = ec;
             NextEntryID = nid;
         }
-
+		
+		public ExecutionEntry ()
+		{
+			
+		}
+		
         public override EntryType GetEntryType ()
         {
             return EntryType.Execution;
@@ -361,12 +366,111 @@ namespace Mistral.UniDialogue
 
 	/// <summary>
 	/// The Connection to a UniDialogueDatabase. 
+	/// Wraps the SQLiteConnection to make sure that the low-level API is not exposed. 
+	/// Always be ready to change the model level. 
 	/// </summary>
 	public class DialogueDBConnection
 	{
 		#region Public Variables
 
 
+		#endregion
+		
+		#region Private Variables
+		
+		private static SQLiteConnection _connection = null;
+		
+		#endregion
+		
+		#region Constructors
+		
+		public DialogueDBConnection ()
+		{
+			_connection = null;
+		}
+		
+		public DialogueDBConnection (string _dbName, SQLiteOpenFlags authentication)
+		{
+			EstablishConnection(_dbName, authentication);
+		}
+		
+		#endregion
+		
+		#region Connection Methods
+		
+		/// <summary>
+		/// Establishes a new connection to the indicated database. 
+		/// </summary>
+		/// <param name="_dbName">Db name.</param>
+		/// <param name="authentication">Authentication.</param>
+		public bool EstablishConnection (string _dbName, SQLiteOpenFlags authentication)
+		{
+			_connection = null;
+			
+			if (!File.Exists(DialogueDBAdmin.streamingPath + _dbName))
+			{
+				Debug.Log("Failed to Establish the Connection! The indicated Database does not exist! ");
+				return false;
+			}
+			
+			_connection = new SQLiteConnection(DialogueDBAdmin.streamingPath + _dbName, authentication);
+			
+			Debug.Log("The Connection has been established successfully! ");
+			
+			return true;
+		}
+		
+		/// <summary>
+		/// Disconnects from the current database. 
+		/// </summary>
+		public void Disconnect ()
+		{
+			_connection = null;
+			
+			Debug.Log("Disconnected! ");
+		}
+		
+		#endregion
+		
+		#region SQL Methods
+		
+		public List<T> Query<T> (string query, params object[] args) where T : new() 
+		{
+			return _connection.Query<T> (query, args);
+		}
+		
+		/// <summary>
+		/// Safe Insert will never cause an interruption. Mostly used during runtime.
+		/// </summary>
+		/// <returns>The insert.</returns>
+		/// <param name="obj">Object.</param>
+		/// <typeparam name="T">The 1st type parameter.</typeparam>
+		public int SafeInsert (object obj)
+		{
+			try
+			{
+				int x = _connection.Insert(obj);
+				return x;
+			}
+			catch (SQLiteException sex)
+			{
+				Debug.Log("An Error is Occured While Trying to Insert Data. However in Safe Mode the Error is Ignored. "
+					+ "The result is: " + sex.Result + "The Message is: " + sex.Message
+				);
+				return 0;
+			}
+		}
+		
+		/// <summary>
+		/// The same with SQLite4Unity Insert Function. 
+		/// Possibly Trigger an error and stops a MonoBehaviour. 
+		/// </summary>
+		/// <param name="obj">Object.</param>
+		public int Insert (object obj)
+		{
+			return _connection.Insert(obj);
+		}
+		
 		#endregion
 	}
 }
