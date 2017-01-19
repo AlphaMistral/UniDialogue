@@ -211,6 +211,7 @@ namespace Mistral.UniDialogue
 
 		public static string streamingPath
 		{
+			///DEBUG: Compiler Options are now toggled. With these options exist the MonoDevelop can't function appropriately ... 
 			get
 			{
 //#if UNITY_EDITOR
@@ -287,7 +288,9 @@ namespace Mistral.UniDialogue
 		}
 		
 		/// <summary>
-		/// Initialize an empty database into a UniDialogue Database. 
+		/// Initialize a database into a UniDialogue Database. 
+		/// Warning: Won't Drop tables other than the ones used by UniDialogue. And meanwhile all the tables that UniDialogue uses
+		/// will be dropped. This operation is not revorable. 
 		/// </summary>
 		/// <param name="_dbName">Db name.</param>
 		public static bool InitializeUniDialogueDB (string _dbName)
@@ -316,7 +319,31 @@ namespace Mistral.UniDialogue
 				return false;
 			}
 		}
-
+		
+		/// <summary>
+		/// Copy the Database to the indicated path. 
+		/// </summary>
+		/// <returns><c>true</c>, if up database was backed, <c>false</c> otherwise.</returns>
+		/// <param name="_originDB">Origin D.</param>
+		/// <param name="_targetPath">Target path.</param>
+		public static bool BackUpDatabase (string _originDB, string _targetPath)
+		{
+			if (!File.Exists(streamingPath + _originDB))
+			{
+				Debug.Log("The dabatase to backup does not exist. ");
+				return false;
+			}
+			
+			if (File.Exists(_targetPath + _originDB))
+			{
+				File.Delete(_targetPath + _originDB);
+			}
+			
+			File.Copy(streamingPath + _originDB, _targetPath + _originDB);
+			
+			return true;
+		}
+		
 		#endregion
 	}
 
