@@ -84,7 +84,15 @@ namespace Mistral.UniDialogue
             ConversationName = cn;
             FirstEntryID = nid;
         }
-
+		
+		/// <summary>
+		/// Default Constructor
+		/// </summary>
+		public ConversationEntry ()
+		{
+			
+		}
+		
         public override EntryType GetEntryType ()
         {
             return EntryType.Conversation;
@@ -118,6 +126,9 @@ namespace Mistral.UniDialogue
             NextEntryID = nid;
         }
 		
+		/// <summary>
+		/// Default Constructor
+		/// </summary>
 		public ExecutionEntry ()
 		{
 			
@@ -161,7 +172,15 @@ namespace Mistral.UniDialogue
             SuccessID = sid;
             NextConditionID = nid;
         }
-
+		
+		/// <summary>
+		/// Default Constructor
+		/// </summary>
+		public ConditionEntry ()
+		{
+			
+		}
+		
         public override EntryType GetEntryType ()
         {
             return EntryType.Condition;
@@ -200,6 +219,14 @@ namespace Mistral.UniDialogue
             NextEntryID = nid;
         }
 
+		/// <summary>
+		/// Default Constrcutor
+		/// </summary>
+		public ContentEntry ()
+		{
+			
+		}
+		
         public override EntryType GetEntryType ()
         {
             return EntryType.Content;
@@ -446,10 +473,10 @@ namespace Mistral.UniDialogue
 			_connection = con;
 			
 			///Get the Rows with maximum ID. 
-			ConversationEntry _maxConversationEntry = _connection.Query<ConversationEntry>("SELECT *, MAX(ID) FROM ConversationEntry");
-			ContentEntry _maxContentEntry = _connection.Query<ContentEntry>("SELECT *, MAX(ID) FROM ContentEntry");
-			ExecutionEntry _maxExecutionEntry = _connection.Query<ExecutionEntry>("SELECT *, MAX(ID) FROM ExecutionEntry");
-			ConditionEntry _maxConditionEntry = _connection.Query<ConditionEntry>("SELECT *, MAX(ID) FROM ConditionEntry");
+			ConversationEntry _maxConversationEntry = _connection.Query<ConversationEntry>("SELECT *, MAX(ID) FROM ConversationEntry")[0];
+			ContentEntry _maxContentEntry = _connection.Query<ContentEntry>("SELECT *, MAX(ID) FROM ContentEntry")[0];
+			ExecutionEntry _maxExecutionEntry = _connection.Query<ExecutionEntry>("SELECT *, MAX(ID) FROM ExecutionEntry")[0];
+			ConditionEntry _maxConditionEntry = _connection.Query<ConditionEntry>("SELECT *, MAX(ID) FROM ConditionEntry")[0];
 			
 			///And then set the IDs to the Manager. If a table is empty, then set the start ID. 
 			if (_maxConversationEntry != null)
@@ -487,9 +514,11 @@ namespace Mistral.UniDialogue
 			catch (SQLiteException sex)
 			{
 				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. ");
+				return false;
 				throw;
 			}
 			NextConversationID++;
+			return true;
 		}
 		
 		public bool InsertContentEntry (string aname, string cname, int nextID)
@@ -502,9 +531,11 @@ namespace Mistral.UniDialogue
 			catch (SQLiteException sex)
 			{
 				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. ");
+				return false;
 				throw;
 			}
 			NextContentID += 10;
+			return true;
 		}
 		
 		public bool InsertExecutionEntry (string ycode, int nextID)
@@ -517,9 +548,11 @@ namespace Mistral.UniDialogue
 			catch (SQLiteException sex)
 			{
 				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. ");
+				return false;
 				throw;
 			}
 			NextExecutionID += 10;
+			return true;
 		}
 		
 		public bool InsertConditionEntry (string ycode, int sucID, int nextID)
@@ -532,9 +565,11 @@ namespace Mistral.UniDialogue
 			catch (SQLiteException sex)
 			{
 				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. ");
+				return false;
 				throw;
 			}
 			NextConditionID += 10;
+			return true;
 		}
 		
 		#endregion
