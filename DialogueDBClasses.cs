@@ -57,7 +57,7 @@ namespace Mistral.UniDialogue
         /// Gets the type of the entry.
         /// </summary>
         /// <returns>The entry type.</returns>
-        public abstract EntryType GetEntryType ();
+		public abstract EntryType GetEntryType();
 		
 		public DialogueDBEntry ()
 		{
@@ -76,7 +76,18 @@ namespace Mistral.UniDialogue
         /// The ID of the first Entry. Could be ExecutionEntry, ConditionEntry or ContentEntry. 
         /// </summary>
         public int FirstEntryID { get; set; }
-
+		
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Mistral.UniDialogue.ConversationEntry"/> class.
+		/// </summary>
+		/// <param name="cn">Cn.</param>
+		/// <param name="nid">Nid.</param>
+		public ConversationEntry (string cn, int nid) : base ()
+		{
+			ConversationName = cn;
+			FirstEntryID = nid;
+		}
+		
         /// <summary>
         /// Initializes a new instance of the <see cref="Mistral.UniDialogue.ConversationEntry"/> class.
         /// </summary>
@@ -118,6 +129,12 @@ namespace Mistral.UniDialogue
         /// <value>The next entry I.</value>
         public int NextEntryID { get; set; }
 
+		public ExecutionEntry (string ec, int nid) : base ()
+		{
+			ExecutionCode = ec;
+			NextEntryID = nid;
+		}
+		
         /// <summary>
         /// Initializes a new instance of the <see cref="Mistral.UniDialogue.ExecutionEntry"/> class.
         /// </summary>
@@ -163,6 +180,19 @@ namespace Mistral.UniDialogue
         /// </summary>
         public int NextConditionID { get; set; }
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Mistral.UniDialogue.ConditionEntry"/> class.
+		/// </summary>
+		/// <param name="cc">Cc.</param>
+		/// <param name="sid">Sid.</param>
+		/// <param name="nid">Nid.</param>
+		public ConditionEntry (string cc, int sid, int nid) : base ()
+		{
+			ConditionCode = cc;
+			SuccessID = sid;
+			NextConditionID = nid;
+		}
+		
         /// <summary>
         /// Initializes a new instance of the <see cref="Mistral.UniDialogue.ConditionEntry"/> class.
         /// </summary>
@@ -209,6 +239,19 @@ namespace Mistral.UniDialogue
         /// </summary>
         public int NextEntryID { get; set; }
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Mistral.UniDialogue.ContentEntry"/> class.
+		/// </summary>
+		/// <param name="a">The alpha component.</param>
+		/// <param name="c">C.</param>
+		/// <param name="nid">Nid.</param>
+		public ContentEntry (string a, string c, int nid) : base ()
+		{
+			Actor = a;
+			Content = c;
+			NextEntryID = nid;
+		}
+		
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Mistral.UniDialogue.ContentEntry"/> class.
 		/// </summary>
@@ -509,6 +552,76 @@ namespace Mistral.UniDialogue
 		
 		#region Insert Methods
 		
+		/// <summary>
+		/// Inserts an entry into the database. 
+		/// </summary>
+		/// <param name="entry">Entry.</param>
+		public void InsertEntry (DialogueDBEntry entry)
+		{
+			EntryType eType = entry.GetEntryType();
+			
+			int newID;
+			
+			switch (eType)
+			{
+				case EntryType.Conversation:
+					newID = NextConversationID;
+					break;
+					
+				case EntryType.Condition:
+					newID = NextConditionID;
+					break;
+					
+				case EntryType.Content:
+					newID = NextContentID;
+					break;
+					
+				case EntryType.Execution:
+					newID = NextExecutionID;
+					break;
+				default:
+					newID = 0;
+					break;
+			}
+			
+			entry.ID = newID;
+			
+			try
+			{
+				_connection.Insert(entry);
+			}
+			catch (SQLiteException sex)
+			{
+				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. "
+					+ "The Result is: " + sex.Result
+					+ "The Message is: " + sex.Message);
+				throw;
+			}
+			
+			switch (eType)
+			{
+				case EntryType.Conversation:
+					NextConversationID++;
+					break;
+					
+				case EntryType.Condition:
+					NextConditionID += 10;
+					break;
+					
+				case EntryType.Content:
+					NextContentID += 10;
+					break;
+					
+				case EntryType.Execution:
+					NextExecutionID += 10;
+					break;
+				default:
+					break;
+			}
+		}
+		
+		//These Methods are not welcomed to use ... However in test mode or some situations they could be pretty handy ...
+		
 		public void InsertConversationEntry (string cname, int startID)
 		{
 			ConversationEntry toInsert = new ConversationEntry(NextConversationID, cname, startID);
@@ -576,6 +689,8 @@ namespace Mistral.UniDialogue
 			}
 			NextConditionID += 10;
 		}
+		
+		//These Methods are not welcomed to use ... However in test mode or some situations they could be pretty handy ...
 		
 		#endregion
 	}
