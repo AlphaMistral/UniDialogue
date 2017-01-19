@@ -353,14 +353,190 @@ namespace Mistral.UniDialogue
 	}
 
 	/// <summary>
-	/// The Dialogue Database Manager. Used Upon a Connection. 
+	/// The Dialogue Database Manager. Used Based on a Connection. 
 	/// </summary>
 	public class DialogueDBManager
 	{
 		#region Public Variables
 
+		/// <summary>
+		/// The Connection to the UniDialogueDB. 
+		/// </summary>
+		public DialogueDBConnection _connection;
 
-
+		#endregion
+		
+		#region Public Attributes
+		
+		public int NextContentID
+		{
+			get
+			{
+				return nextContentID;
+			}
+			
+			private set
+			{
+				nextContentID = value;
+			}
+		}
+		
+		public int NextExecutionID
+		{
+			get
+			{
+				return nextExecutionID;
+			}
+			
+			private set
+			{
+				nextExecutionID = value;
+			}
+		}
+		
+		public int NextConditionID
+		{
+			get
+			{
+				return nextConditionID;
+			}
+			
+			private set
+			{
+				nextConditionID = value;
+			}
+		}
+		
+		public int NextConversationID
+		{
+			get
+			{
+				return nextConversationID;
+			}
+			
+			private set
+			{
+				nextConversationID = value;
+			}
+		}
+		
+		#endregion
+		
+		#region Private Variables
+		
+		private int nextContentID;
+		
+		private int nextExecutionID;
+		
+		private int nextConditionID;
+		
+		private int nextConversationID;
+		
+		#endregion 
+		
+		#region Constructors
+		
+		public DialogueDBManager ()
+		{
+			
+		}
+		
+		public DialogueDBManager (DialogueDBConnection con)
+		{
+			_connection = con;
+			
+			///Get the Rows with maximum ID. 
+			ConversationEntry _maxConversationEntry = _connection.Query<ConversationEntry>("SELECT *, MAX(ID) FROM ConversationEntry");
+			ContentEntry _maxContentEntry = _connection.Query<ContentEntry>("SELECT *, MAX(ID) FROM ContentEntry");
+			ExecutionEntry _maxExecutionEntry = _connection.Query<ExecutionEntry>("SELECT *, MAX(ID) FROM ExecutionEntry");
+			ConditionEntry _maxConditionEntry = _connection.Query<ConditionEntry>("SELECT *, MAX(ID) FROM ConditionEntry");
+			
+			///And then set the IDs to the Manager. If a table is empty, then set the start ID. 
+			if (_maxConversationEntry != null)
+				NextConversationID = _maxConversationEntry.ID + 1;
+			else
+				NextConversationID = 1;
+			
+			if (_maxContentEntry != null)
+				NextContentID = _maxContentEntry.ID + 10;
+			else
+				NextContentID = 1;
+			
+			if (_maxExecutionEntry != null)
+				NextExecutionID = _maxExecutionEntry.ID + 10;
+			else
+				NextExecutionID = 2;
+			
+			if (_maxConditionEntry != null)
+				NextConditionID = _maxConditionEntry.ID + 10;
+			else
+				NextConditionID = 3;
+		}
+		
+		#endregion
+		
+		#region Insert Methods
+		
+		public bool InsertConversationEntry (string cname, int startID)
+		{
+			ConversationEntry toInsert = new ConversationEntry(NextConversationID, cname, startID);
+			try
+			{
+				_connection.Insert(toInsert);
+			}
+			catch (SQLiteException sex)
+			{
+				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. ");
+				throw;
+			}
+			NextConversationID++;
+		}
+		
+		public bool InsertContentEntry (string aname, string cname, int nextID)
+		{
+			ContentEntry toInsert = new ContentEntry(NextContentID, aname, cname, nextID);
+			try
+			{
+				_connection.Insert(toInsert);
+			}
+			catch (SQLiteException sex)
+			{
+				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. ");
+				throw;
+			}
+			NextContentID += 10;
+		}
+		
+		public bool InsertExecutionEntry (string ycode, int nextID)
+		{
+			ExecutionEntry toInsert = new ExecutionEntry(NextExecutionID, ycode, nextID);
+			try
+			{
+				_connection.Insert(toInsert);
+			}
+			catch (SQLiteException sex)
+			{
+				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. ");
+				throw;
+			}
+			NextExecutionID += 10;
+		}
+		
+		public bool InsertConditionEntry (string ycode, int sucID, int nextID)
+		{
+			ConditionEntry toInsert = new ConditionEntry(NextConditionID, ycode, sucID, nextID);
+			try
+			{
+				_connection.Insert(toInsert);
+			}
+			catch (SQLiteException sex)
+			{
+				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. ");
+				throw;
+			}
+			NextConditionID += 10;
+		}
+		
 		#endregion
 	}
 
@@ -378,6 +554,9 @@ namespace Mistral.UniDialogue
 		
 		#region Private Variables
 		
+		/// <summary>
+		/// The Connection to the SQLite DB. 
+		/// </summary>
 		private static SQLiteConnection _connection = null;
 		
 		#endregion
