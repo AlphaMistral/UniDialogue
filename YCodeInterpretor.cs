@@ -35,7 +35,10 @@ namespace Mistral.UniDialogue
 		VAR, CONST, FUNC, EXPR, 
 		SEMICOLON, L_BRACKET, R_BRACKET, LS_BRACKET, RS_BRACKET, COMMA, 
 		PLUS, MINUS, MUL, DIV, POW, DPLUS, DMINUS, 
+		PLUSEQ, MINUSEQ, MULEQ, DIVEQ, POWEQ, 
 		AND, OR, NOT, 
+		MORE, LESS, EQUAL, 
+		MOREEQ, LESSEQ, NOTEQUAL, EQUALEQ, 
 		NONTOKEN,
 		ERRTOKEN
 	}
@@ -208,6 +211,8 @@ namespace Mistral.UniDialogue
 		{
 			YCodeNode node;
 			
+			tokenBuffer = "";
+			
 			char c = GetChar();
 			
 			if (char.IsLetter(c))
@@ -218,7 +223,7 @@ namespace Mistral.UniDialogue
 			{
 				node = DigitNode(c);
 			}
-			else if (c == '&' || c == '|' || c == '~')
+			else if (c == '&' || c == '|' || c == '!')
 			{
 				node = LogicNode(c);
 			}
@@ -270,7 +275,6 @@ namespace Mistral.UniDialogue
 			}
 
 			node.lexicon = tokenBuffer;
-			tokenBuffer = "";
 			node.value = YCodeVariableBuffer.GetVariable(node.lexicon);
 			
 			return node;
@@ -291,7 +295,6 @@ namespace Mistral.UniDialogue
 			BackSpaceChar();
 
 			node.lexicon = tokenBuffer;
-			tokenBuffer = "";
 			
 			float v;
 			
@@ -349,14 +352,24 @@ namespace Mistral.UniDialogue
 					}
 					break;
 					
-				case '~':
-					node.type = TokenType.NOT;
+				case '!':
+					c = GetChar();
+					if (c == '=')
+					{
+						node.type = TokenType.NOTEQUAL;
+					}
+					else
+					{
+						node.type = TokenType.NOT;
+						BackSpaceChar();
+					}
 					break;
 					
 				default: 
 					///Actually, this is impossible ... 
 					break;
 			}
+			node.lexicon = tokenBuffer;
 			
 			return node;
 		}
@@ -365,20 +378,166 @@ namespace Mistral.UniDialogue
 		{
 			YCodeNode node = new YCodeNode();
 			
+			tokenBuffer += c;
+			node.value = (float)0f;
+			
+			switch (c)
+			{
+				case '+':
+					c = GetChar();
+					if (c == '=')
+					{
+						node.type = TokenType.PLUSEQ;
+						tokenBuffer += '=';
+					}
+					else
+					{
+						node.type = TokenType.PLUS;
+						BackSpaceChar();
+					}
+					break;
+				case '-':
+					c = GetChar();
+					if (c == '=')
+					{
+						node.type = TokenType.MINUSEQ;
+						tokenBuffer += '=';
+					}
+					else
+					{
+						node.type = TokenType.MINUS;
+						BackSpaceChar();
+					}
+					break;
+				case '*':
+					c = GetChar();
+					if (c == '=')
+					{
+						node.type = TokenType.MULEQ;
+						tokenBuffer += '=';
+					}
+					else
+					{
+						node.type = TokenType.MUL;
+						BackSpaceChar();
+					}
+					break;
+				case '/':
+					c = GetChar();
+					if (c == '=')
+					{
+						node.type = TokenType.DIVEQ;
+						tokenBuffer += '=';
+					}
+					else
+					{
+						node.type = TokenType.DIV;
+						BackSpaceChar();
+					}
+					break;
+				case '^':
+					c = GetChar();
+					if (c == '=')
+					{
+						node.type = TokenType.POWEQ;
+						tokenBuffer += '=';
+					}
+					else
+					{
+						node.type = TokenType.POW;
+						BackSpaceChar ();
+					}
+					break;
+			}
+			
+			node.lexicon = tokenBuffer;
+			
 			return node;
 		}
 		
 		public static YCodeNode CompareNode (char c)
 		{
 			YCodeNode node = new YCodeNode();
-
+			
+			tokenBuffer += c;
+			
+			switch (c)
+			{
+				case '>':
+					c = GetChar();
+					if (c == '=')
+					{
+						node.type = TokenType.MOREEQ;
+						tokenBuffer += '=';
+					}
+					else
+					{
+						node.type = TokenType.MORE;
+						BackSpaceChar();
+					}
+					break;
+				case '<':
+					c = GetChar();
+					if (c == '=')
+					{
+						node.type = TokenType.LESSEQ;
+						tokenBuffer += '=';
+					}
+					else
+					{
+						node.type = TokenType.LESS;
+						BackSpaceChar();
+					}
+					break;
+				case '=':
+					c = GetChar();
+					if (c == '=')
+					{
+						node.type = TokenType.EQUALEQ;
+						tokenBuffer += '=';
+					}
+					else
+					{
+						node.type = TokenType.EQUAL;
+						BackSpaceChar();
+					}
+					break;
+			}
+			
+			node.lexicon = tokenBuffer;
+			
 			return node;
 		}
 		
 		public static YCodeNode ExprNode (char c)
 		{
 			YCodeNode node = new YCodeNode();
-
+			
+			tokenBuffer += c;
+			
+			c = GetChar();
+			
+			int lBracket = 1, rBracket = 0;
+			
+			while (lBracket != rBracket && c != '\0')
+			{
+				if (c == '(')
+					lBracket++;
+				else if (c == ')')
+					rBracket++;
+				
+				tokenBuffer += c;
+				
+				c = GetChar();
+			}
+			
+			if (lBracket != rBracket)
+				node.value = null;
+			else
+				node.value = (float)0f;
+			
+			node.lexicon = tokenBuffer;
+			
 			return node;
 		}
 		
