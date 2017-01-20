@@ -166,9 +166,15 @@ namespace Mistral.UniDialogue
 		{
 			code = "";
 			
+			bool quotation = false;
+			
 			for (int i = 0, imax = sentence.Length; i < imax; i++)
 			{
-				if (sentence[i] != ' ')
+				if (sentence[i] == '\"' && GetChar (i - 1) != '\\')
+				{
+					quotation = !quotation;
+				}
+				if (sentence[i] != ' ' && !quotation)
 					code += sentence[i];
 			}
 			
@@ -191,6 +197,19 @@ namespace Mistral.UniDialogue
 			}
 			else 
 				return code[currentPointer++];
+		}
+		
+		/// <summary>
+		/// A safe GetChar relative to directly calling to code[index];
+		/// </summary>
+		/// <returns>The char.</returns>
+		/// <param name="index">Index.</param>
+		private static char GetChar (int index)
+		{
+			if (index >= 0 && index < code.Length)
+				return code[index];
+			else
+				return '\0';
 		}
 		
 		/// <summary>
