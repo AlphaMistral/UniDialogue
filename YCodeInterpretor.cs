@@ -85,6 +85,11 @@ namespace Mistral.UniDialogue
 			value = v;
 		}
 		
+		public override string ToString()
+		{
+			return string.Format("[TokenType = {0}, lexicon = {1}, value = {2};]", type.ToString (), lexicon, value == null? "NULL" : value.ToString ());
+		}
+		
 		#endregion
 	}
 	
@@ -159,9 +164,16 @@ namespace Mistral.UniDialogue
 		/// <param name="sentence">Sentence.</param>
 		private static void Initialize (string sentence)
 		{
-			code = sentence;
+			code = "";
+			
+			for (int i = 0, imax = sentence.Length; i < imax; i++)
+			{
+				if (sentence[i] != ' ')
+					code += sentence[i];
+			}
+			
 			tokenBuffer = "";
-			errorMessages.Clear();
+			errorMessages = new List<string>();
 			currentPointer = 0;
 		}
 		
@@ -172,14 +184,11 @@ namespace Mistral.UniDialogue
 		/// <returns>The char.</returns>
 		private static char GetChar ()
 		{
-			///Ignores all the spaces. 
-			while (code[currentPointer] == ' ' && currentPointer < code.Length)
+			if (currentPointer == code.Length)
 			{
 				currentPointer++;
-			}
-			
-			if (currentPointer == code.Length)
 				return '\0';
+			}
 			else 
 				return code[currentPointer++];
 		}
@@ -189,7 +198,7 @@ namespace Mistral.UniDialogue
 		/// </summary>
 		private static void BackSpaceChar ()
 		{
-			if (currentPointer != 0)
+			if (currentPointer != 0 && currentPointer <= code.Length)
 				currentPointer--;
 		}
 		
@@ -328,12 +337,12 @@ namespace Mistral.UniDialogue
 					if (c != '&')
 					{
 						node.value = null;
+						BackSpaceChar();
 						///Error Message. 
 					}
 					else
 					{
 						tokenBuffer += c;
-						BackSpaceChar();
 					}
 					break;
 					
@@ -343,12 +352,12 @@ namespace Mistral.UniDialogue
 					if (c != '|')
 					{
 						node.value = null;
+						BackSpaceChar();
 						///Error Message. 
 					}
 					else
 					{
 						tokenBuffer += c;
-						BackSpaceChar();
 					}
 					break;
 					
@@ -357,6 +366,7 @@ namespace Mistral.UniDialogue
 					if (c == '=')
 					{
 						node.type = TokenType.NOTEQUAL;
+						tokenBuffer += c;
 					}
 					else
 					{
@@ -369,6 +379,7 @@ namespace Mistral.UniDialogue
 					///Actually, this is impossible ... 
 					break;
 			}
+			
 			node.lexicon = tokenBuffer;
 			
 			return node;
@@ -513,6 +524,8 @@ namespace Mistral.UniDialogue
 		{
 			YCodeNode node = new YCodeNode();
 			
+			node.type = TokenType.EXPR;
+			
 			tokenBuffer += c;
 			
 			c = GetChar();
@@ -530,6 +543,9 @@ namespace Mistral.UniDialogue
 				
 				c = GetChar();
 			}
+			
+			if (c != '\0')
+				BackSpaceChar();
 			
 			if (lBracket != rBracket)
 				node.value = null;
