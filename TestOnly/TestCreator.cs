@@ -15,29 +15,29 @@ public class TestCreator : MonoBehaviour
 		DialogueDBConnection _connection = new DialogueDBConnection("Fucker.db", SQLiteOpenFlags.ReadWrite);
 		DialogueDBManager _dbManager = new DialogueDBManager(_connection);
 		
-		ConversationEntry con1 = new ConversationEntry("asd1", -1);
-		ConversationEntry con2 = new ConversationEntry("asd2", -1);
-		ConversationEntry con3 = new ConversationEntry("asd3", -1);
-		ConversationEntry con4 = new ConversationEntry("asd4", -1);
-		ConversationEntry con5 = new ConversationEntry("asd5", -1);
+		ConversationDBEntry con1 = new ConversationDBEntry("asd1", -1);
+		ConversationDBEntry con2 = new ConversationDBEntry("asd2", -1);
+		ConversationDBEntry con3 = new ConversationDBEntry("asd3", -1);
+		ConversationDBEntry con4 = new ConversationDBEntry("asd4", -1);
+		ConversationDBEntry con5 = new ConversationDBEntry("asd5", -1);
 		
-		ContentEntry coe1 = new ContentEntry("fff1", "ccc1", -1);
-		ContentEntry coe2 = new ContentEntry("fff2", "ccc2", -1);
-		ContentEntry coe3 = new ContentEntry("fff3", "ccc3", -1);
-		ContentEntry coe4 = new ContentEntry("fff4", "ccc4", -1);
-		ContentEntry coe5 = new ContentEntry("fff5", "ccc5", -1);
+		ContentDBEntry coe1 = new ContentDBEntry("fff1", "ccc1", -1);
+		ContentDBEntry coe2 = new ContentDBEntry("fff2", "ccc2", -1);
+		ContentDBEntry coe3 = new ContentDBEntry("fff3", "ccc3", -1);
+		ContentDBEntry coe4 = new ContentDBEntry("fff4", "ccc4", -1);
+		ContentDBEntry coe5 = new ContentDBEntry("fff5", "ccc5", -1);
 		
-		ExecutionEntry exe1 = new ExecutionEntry("eee1", -1);
-		ExecutionEntry exe2 = new ExecutionEntry("eee2", -1);
-		ExecutionEntry exe3 = new ExecutionEntry("eee3", -1);
-		ExecutionEntry exe4 = new ExecutionEntry("eee4", -1);
-		ExecutionEntry exe5 = new ExecutionEntry("eee5", -1);
+		ExecutionDBEntry exe1 = new ExecutionDBEntry("eee1", -1);
+		ExecutionDBEntry exe2 = new ExecutionDBEntry("eee2", -1);
+		ExecutionDBEntry exe3 = new ExecutionDBEntry("eee3", -1);
+		ExecutionDBEntry exe4 = new ExecutionDBEntry("eee4", -1);
+		ExecutionDBEntry exe5 = new ExecutionDBEntry("eee5", -1);
 		
-		ConditionEntry cod1 = new ConditionEntry("ddd1", -1, -1);
-		ConditionEntry cod2 = new ConditionEntry("ddd2", -1, -1);
-		ConditionEntry cod3 = new ConditionEntry("ddd3", -1, -1);
-		ConditionEntry cod4 = new ConditionEntry("ddd4", -1, -1);
-		ConditionEntry cod5 = new ConditionEntry("ddd5", -1, -1);
+		ConditionDBEntry cod1 = new ConditionDBEntry("ddd1", -1, -1);
+		ConditionDBEntry cod2 = new ConditionDBEntry("ddd2", -1, -1);
+		ConditionDBEntry cod3 = new ConditionDBEntry("ddd3", -1, -1);
+		ConditionDBEntry cod4 = new ConditionDBEntry("ddd4", -1, -1);
+		ConditionDBEntry cod5 = new ConditionDBEntry("ddd5", -1, -1);
 		
 		_dbManager.InsertEntry(con1);
 		_dbManager.InsertEntry(con2);
@@ -60,8 +60,8 @@ public class TestCreator : MonoBehaviour
 		_dbManager.InsertEntry(cod4);
 		_dbManager.InsertEntry(cod5);
 		
-		List<ExecutionEntry> list = _connection.Query<ExecutionEntry>("SELECT *, MAX(ID) FROM ExecutionEntry;");
-		foreach (ExecutionEntry ee in list)
+		List<ExecutionDBEntry> list = _connection.Query<ExecutionDBEntry>("SELECT *, MAX(ID) FROM ExecutionDBEntry;");
+		foreach (ExecutionDBEntry ee in list)
 		{
 			Debug.Log(ee.ExecutionCode);
 		}

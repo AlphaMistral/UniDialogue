@@ -1,5 +1,5 @@
 ﻿//
-// Copyright (c) 20015-2017 Jingping Yu.
+// Copyright (c) 2015-2017 Jingping Yu.
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,10 +33,11 @@ namespace Mistral.UniDialogue
     /// </summary>
     public enum  EntryType
     {
-        Conversation,
-        Execution,
-        Condition,
-        Content
+        Conversation = 0,
+        Execution = 2,
+        Condition = 3,
+        Content = 1,
+		Extension = 4
     }
 
     ///Why are all the variables in capital? Because of SQLite4Unity3d. 
@@ -51,7 +52,7 @@ namespace Mistral.UniDialogue
         /// </summary>
         /// <value>The ID.</value>
 		[PrimaryKey]
-		public int ID { get; set; }
+		public int ID { get; protected set; }
 
         /// <summary>
         /// Gets the type of the entry.
@@ -59,42 +60,48 @@ namespace Mistral.UniDialogue
         /// <returns>The entry type.</returns>
 		public abstract EntryType GetEntryType();
 		
+		/// <summary>
+		/// Gets the Next ID. For Extension Entry a -2 is returned. 
+		/// </summary>
+		/// <returns>The next I.</returns>
+		public abstract int GetNextID ();
+		
 		public DialogueDBEntry ()
 		{
 			ID = -1;
 		}
 	}
 
-	public class ConversationEntry : DialogueDBEntry
+	public class ConversationDBEntry : DialogueDBEntry
 	{
         /// <summary>
         /// The name of the Conversation.
         /// </summary>
-        public string ConversationName { get; set; }
+        public string ConversationName { get; private set; }
 
         /// <summary>
-        /// The ID of the first Entry. Could be ExecutionEntry, ConditionEntry or ContentEntry. 
+        /// The ID of the first Entry. Could be ExecutionDBEntry, ConditionDBEntry or ContentDBEntry. 
         /// </summary>
-        public int FirstEntryID { get; set; }
+        public int FirstEntryID { get; private set; }
 		
 		/// <summary>
-		/// Initializes a new instance of the <see cref="Mistral.UniDialogue.ConversationEntry"/> class.
+		/// Initializes a new instance of the <see cref="Mistral.UniDialogue.ConversationDBEntry"/> class.
 		/// </summary>
 		/// <param name="cn">Cn.</param>
 		/// <param name="nid">Nid.</param>
-		public ConversationEntry (string cn, int nid) : base ()
+		public ConversationDBEntry (string cn, int nid) : base ()
 		{
 			ConversationName = cn;
 			FirstEntryID = nid;
 		}
 		
         /// <summary>
-        /// Initializes a new instance of the <see cref="Mistral.UniDialogue.ConversationEntry"/> class.
+        /// Initializes a new instance of the <see cref="Mistral.UniDialogue.ConversationDBEntry"/> class.
         /// </summary>
         /// <param name="id">Identifier.</param>
         /// <param name="cn">Cn.</param>
         /// <param name="nid">Nid.</param>
-        public ConversationEntry (int id, string cn, int nid)
+        public ConversationDBEntry (int id, string cn, int nid)
         {
             ID = id;
             ConversationName = cn;
@@ -104,7 +111,7 @@ namespace Mistral.UniDialogue
 		/// <summary>
 		/// Default Constructor
 		/// </summary>
-		public ConversationEntry () : base()
+		public ConversationDBEntry () : base()
 		{
 			
 		}
@@ -113,35 +120,44 @@ namespace Mistral.UniDialogue
         {
             return EntryType.Conversation;
         }
+		
+		/// <summary>
+		/// For Conversation Entries, the id of the first content is returned. 
+		/// </summary>
+		/// <returns>The next I.</returns>
+		public override int GetNextID ()
+		{
+			return FirstEntryID;
+		}
 	}
 
-	public class ExecutionEntry : DialogueDBEntry
+	public class ExecutionDBEntry : DialogueDBEntry
 	{
         /// <summary>
         /// The YCode to be Executed. 
         /// </summary>
         /// <value>The execution code.</value>
-        public string ExecutionCode { get; set; }
+        public string ExecutionCode { get; private set; }
 
         /// <summary>
-        /// The ID of the Next Entry. Could be ExecutionEntry, ConditionEntry of ContentEntry. 
+        /// The ID of the Next Entry. Could be ExecutionDBEntry, ConditionDBEntry of ContentDBEntry. 
         /// </summary>
         /// <value>The next entry I.</value>
-        public int NextEntryID { get; set; }
+        public int NextEntryID { get; private set; }
 
-		public ExecutionEntry (string ec, int nid) : base ()
+		public ExecutionDBEntry (string ec, int nid) : base ()
 		{
 			ExecutionCode = ec;
 			NextEntryID = nid;
 		}
 		
         /// <summary>
-        /// Initializes a new instance of the <see cref="Mistral.UniDialogue.ExecutionEntry"/> class.
+        /// Initializes a new instance of the <see cref="Mistral.UniDialogue.ExecutionDBEntry"/> class.
         /// </summary>
         /// <param name="id">Identifier.</param>
         /// <param name="ec">Ec.</param>
         /// <param name="nid">Nid.</param>
-        public ExecutionEntry (int id, string ec, int nid)
+        public ExecutionDBEntry (int id, string ec, int nid)
         {
             ID = id;
 			ExecutionCode = ec;
@@ -151,7 +167,7 @@ namespace Mistral.UniDialogue
 		/// <summary>
 		/// Default Constructor
 		/// </summary>
-		public ExecutionEntry () : base()
+		public ExecutionDBEntry () : base()
 		{
 			
 		}
@@ -160,33 +176,38 @@ namespace Mistral.UniDialogue
         {
             return EntryType.Execution;
         }
+		
+		public override int GetNextID()
+		{
+			return NextEntryID;
+		}
 	}
 
-	public class ConditionEntry : DialogueDBEntry
+	public class ConditionDBEntry : DialogueDBEntry
 	{
         /// <summary>
         /// The Condition of Execution this Entry. 
         /// </summary>
         /// <value>The condition code.</value>
-        public string ConditionCode { get; set; }
+        public string ConditionCode { get; private set; }
 
         /// <summary>
         /// The ID of the entry to enter when the condition is met. 
         /// </summary>
-        public int SuccessID { get; set; }
+        public int SuccessID { get; private set; }
 
         /// <summary>
-        /// If the condition is failed, move to the next ConditionEntry. 
+        /// If the condition is failed, move to the next ConditionDBEntry. 
         /// </summary>
-        public int NextConditionID { get; set; }
+        public int NextConditionID { get; private set; }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="Mistral.UniDialogue.ConditionEntry"/> class.
+		/// Initializes a new instance of the <see cref="Mistral.UniDialogue.ConditionDBEntry"/> class.
 		/// </summary>
 		/// <param name="cc">Cc.</param>
 		/// <param name="sid">Sid.</param>
 		/// <param name="nid">Nid.</param>
-		public ConditionEntry (string cc, int sid, int nid) : base ()
+		public ConditionDBEntry (string cc, int sid, int nid) : base ()
 		{
 			ConditionCode = cc;
 			SuccessID = sid;
@@ -194,13 +215,13 @@ namespace Mistral.UniDialogue
 		}
 		
         /// <summary>
-        /// Initializes a new instance of the <see cref="Mistral.UniDialogue.ConditionEntry"/> class.
+        /// Initializes a new instance of the <see cref="Mistral.UniDialogue.ConditionDBEntry"/> class.
         /// </summary>
         /// <param name="id">Identifier.</param>
         /// <param name="cc">Cc.</param>
         /// <param name="sid">Sid.</param>
         /// <param name="nid">Nid.</param>
-        public ConditionEntry (int id, string cc, int sid, int nid)
+        public ConditionDBEntry (int id, string cc, int sid, int nid)
         {
             ID = id;
             ConditionCode = cc;
@@ -211,7 +232,7 @@ namespace Mistral.UniDialogue
 		/// <summary>
 		/// Default Constructor
 		/// </summary>
-		public ConditionEntry () : base()
+		public ConditionDBEntry () : base()
 		{
 			
 		}
@@ -220,32 +241,76 @@ namespace Mistral.UniDialogue
         {
             return EntryType.Condition;
         }
+		
+		public override int GetNextID ()
+		{
+			return NextConditionID;
+		}
+	}
+	
+	public class ExtensionDBEntry : DialogueDBEntry
+	{
+		/// <summary>
+		/// The IDs of the next entries that are concatenated into a single string. 
+		/// </summary>
+		/// <value>The I ds.</value>
+		public string IDs { get; private set; }
+		
+		public ExtensionDBEntry () : base ()
+		{
+			
+		}
+		
+		public ExtensionDBEntry (string ids)
+		{
+			IDs = ids;
+		}
+		
+		public ExtensionDBEntry (int id, string ids)
+		{
+			ID = id;
+			IDs = ids;
+		}
+		
+		public override EntryType GetEntryType ()
+		{
+			return EntryType.Extension;
+		}
+		
+		/// <summary>
+		/// An Extension Entry never has a next id! 
+		/// </summary>
+		/// <returns>The next I.</returns>
+		public override int GetNextID ()
+		{
+			return -1;
+		}
 	}
 
-    public class ContentEntry : DialogueDBEntry
+    public class ContentDBEntry : DialogueDBEntry
     {
         /// <summary>
         /// The Actors who say the content. In the case of multiple actors, split the actors using '#'. 
         /// </summary>
-        public string Actor { get; set; }
+        public string Actor { get; private set; }
 
         /// <summary>
         /// The content being told. 
         /// </summary>
-        public string Content { get; set; }
+        public string Content { get; private set; }
 
         /// <summary>
-        /// The ID of the next Entry. Could be ExecutionEntry, COnditionEntry or ContentEntry. 
+        /// The ID of the next Entry. Could be ExecutionDBEntry, ConditionDBEntry or ContentDBEntry. 
         /// </summary>
-        public int NextEntryID { get; set; }
+        public int NextEntryID { get; private set; }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="Mistral.UniDialogue.ContentEntry"/> class.
+		/// Initializes a new instance of the <see cref="Mistral.UniDialogue.ContentDBEntry"/> class.
 		/// </summary>
 		/// <param name="a">The alpha component.</param>
 		/// <param name="c">C.</param>
 		/// <param name="nid">Nid.</param>
-		public ContentEntry (string a, string c, int nid) : base ()
+		public ContentDBEntry (string a, string c, int nid) : base ()
 		{
 			Actor = a;
 			Content = c;
@@ -253,13 +318,13 @@ namespace Mistral.UniDialogue
 		}
 		
 		/// <summary>
-		/// Initializes a new instance of the <see cref="Mistral.UniDialogue.ContentEntry"/> class.
+		/// Initializes a new instance of the <see cref="Mistral.UniDialogue.ContentDBEntry"/> class.
 		/// </summary>
 		/// <param name="id">Identifier.</param>
 		/// <param name="a">The alpha component.</param>
 		/// <param name="c">C.</param>
 		/// <param name="nid">Nid.</param>
-        public ContentEntry (int id, string a, string c, int nid)
+        public ContentDBEntry (int id, string a, string c, int nid)
         {
             ID = id;
             Actor = a;
@@ -270,7 +335,7 @@ namespace Mistral.UniDialogue
 		/// <summary>
 		/// Default Constrcutor
 		/// </summary>
-		public ContentEntry () : base()
+		public ContentDBEntry () : base()
 		{
 			
 		}
@@ -279,6 +344,11 @@ namespace Mistral.UniDialogue
         {
             return EntryType.Content;
         }
+		
+		public override int GetNextID ()
+		{
+			return NextEntryID;
+		}
     }
 
 	/// <summary>
@@ -380,16 +450,16 @@ namespace Mistral.UniDialogue
 				SQLiteConnection _connection = new SQLiteConnection(streamingPath + _dbName, SQLiteOpenFlags.ReadWrite);
 				
 				///Drop Old Tables. 
-				_connection.DropTable<ConversationEntry>();
-				_connection.DropTable<ContentEntry>();
-				_connection.DropTable<ConditionEntry>();
-				_connection.DropTable<ExecutionEntry>();
+				_connection.DropTable<ConversationDBEntry>();
+				_connection.DropTable<ContentDBEntry>();
+				_connection.DropTable<ConditionDBEntry>();
+				_connection.DropTable<ExecutionDBEntry>();
 				
 				///Create New Tables
-				_connection.CreateTable<ConversationEntry>();
-				_connection.CreateTable<ContentEntry>();
-				_connection.CreateTable<ConditionEntry>();
-				_connection.CreateTable<ExecutionEntry>();
+				_connection.CreateTable<ConversationDBEntry>();
+				_connection.CreateTable<ContentDBEntry>();
+				_connection.CreateTable<ConditionDBEntry>();
+				_connection.CreateTable<ExecutionDBEntry>();
 				
 				return true;
 			}
@@ -495,6 +565,19 @@ namespace Mistral.UniDialogue
 			}
 		}
 		
+		public int NextExtensionID
+		{
+			get
+			{
+				return nextExtensionID;
+			}
+
+			private set
+			{
+				nextExtensionID = value;
+			}
+		}
+		
 		#endregion
 		
 		#region Private Variables
@@ -506,6 +589,8 @@ namespace Mistral.UniDialogue
 		private int nextConditionID;
 		
 		private int nextConversationID;
+		
+		private int nextExtensionID;
 		
 		#endregion 
 		
@@ -521,31 +606,37 @@ namespace Mistral.UniDialogue
 			_connection = con;
 			
 			///Get the Rows with maximum ID. 
-			ConversationEntry _maxConversationEntry = _connection.Query<ConversationEntry>("SELECT *, MAX(ID) FROM ConversationEntry")[0];
-			ContentEntry _maxContentEntry = _connection.Query<ContentEntry>("SELECT *, MAX(ID) FROM ContentEntry")[0];
-			ExecutionEntry _maxExecutionEntry = _connection.Query<ExecutionEntry>("SELECT *, MAX(ID) FROM ExecutionEntry")[0];
-			ConditionEntry _maxConditionEntry = _connection.Query<ConditionEntry>("SELECT *, MAX(ID) FROM ConditionEntry")[0];
+			ConversationDBEntry _maxConversationDBEntry = _connection.Query<ConversationDBEntry>("SELECT *, MAX(ID) FROM ConversationDBEntry")[0];
+			ContentDBEntry _maxContentDBEntry = _connection.Query<ContentDBEntry>("SELECT *, MAX(ID) FROM ContentDBEntry")[0];
+			ExecutionDBEntry _maxExecutionDBEntry = _connection.Query<ExecutionDBEntry>("SELECT *, MAX(ID) FROM ExecutionDBEntry")[0];
+			ConditionDBEntry _maxConditionDBEntry = _connection.Query<ConditionDBEntry>("SELECT *, MAX(ID) FROM ConditionDBEntry")[0];
+			ExtensionDBEntry _maxExtensionDBEntry = _connection.Query<ExtensionDBEntry>("SELECT *, MAX(ID) FROM ExtensionDBEntry")[0];
 			
 			///And then set the IDs to the Manager. If a table is empty, then set the start ID. 
-			if (_maxConversationEntry.ID != 0)
-				NextConversationID = _maxConversationEntry.ID + 1;
+			if (_maxConversationDBEntry.ID != 0)
+				NextConversationID = _maxConversationDBEntry.ID + 1;
 			else
 				NextConversationID = 1;
 			
-			if (_maxContentEntry.ID != 0)
-				NextContentID = _maxContentEntry.ID + 10;
+			if (_maxContentDBEntry.ID != 0)
+				NextContentID = _maxContentDBEntry.ID + 10;
 			else
 				NextContentID = 1;
 			
-			if (_maxExecutionEntry.ID != 0)
-				NextExecutionID = _maxExecutionEntry.ID + 10;
+			if (_maxExecutionDBEntry.ID != 0)
+				NextExecutionID = _maxExecutionDBEntry.ID + 10;
 			else
 				NextExecutionID = 2;
 			
-			if (_maxConditionEntry.ID != 0)
-				NextConditionID = _maxConditionEntry.ID + 10;
+			if (_maxConditionDBEntry.ID != 0)
+				NextConditionID = _maxConditionDBEntry.ID + 10;
 			else
 				NextConditionID = 3;
+			
+			if (_maxExtensionDBEntry.ID != 0)
+				NextExtensionID = _maxExtensionDBEntry.ID + 10;
+			else
+				NextExtensionID = 4;
 		}
 		
 		#endregion
@@ -554,6 +645,7 @@ namespace Mistral.UniDialogue
 		
 		/// <summary>
 		/// Inserts an entry into the database. 
+		/// This Method is For Test Only! 
 		/// </summary>
 		/// <param name="entry">Entry.</param>
 		public void InsertEntry (DialogueDBEntry entry)
@@ -579,12 +671,15 @@ namespace Mistral.UniDialogue
 				case EntryType.Execution:
 					newID = NextExecutionID;
 					break;
+				case EntryType.Extension:
+					newID = NextExtensionID;
+					break;
 				default:
 					newID = 0;
 					break;
 			}
 			
-			entry.ID = newID;
+			//entry.ID = newID;
 			
 			try
 			{
@@ -615,16 +710,20 @@ namespace Mistral.UniDialogue
 				case EntryType.Execution:
 					NextExecutionID += 10;
 					break;
+				case EntryType.Extension:
+					NextExtensionID += 10;
+					break;
 				default:
 					break;
 			}
 		}
 		
 		//These Methods are not welcomed to use ... However in test mode or some situations they could be pretty handy ...
+		//Recommended Replacement : Safe insert. Just to make the codes more beautiful. 
 		
-		public void InsertConversationEntry (string cname, int startID)
+		public void InsertConversationDBEntry (string cname, int startID)
 		{
-			ConversationEntry toInsert = new ConversationEntry(NextConversationID, cname, startID);
+			ConversationDBEntry toInsert = new ConversationDBEntry(NextConversationID, cname, startID);
 			try
 			{
 				_connection.Insert(toInsert);
@@ -639,9 +738,9 @@ namespace Mistral.UniDialogue
 			NextConversationID++;
 		}
 		
-		public void InsertContentEntry (string aname, string cname, int nextID)
+		public void InsertContentDBEntry (string aname, string cname, int nextID)
 		{
-			ContentEntry toInsert = new ContentEntry(NextContentID, aname, cname, nextID);
+			ContentDBEntry toInsert = new ContentDBEntry(NextContentID, aname, cname, nextID);
 			try
 			{
 				_connection.Insert(toInsert);
@@ -656,9 +755,9 @@ namespace Mistral.UniDialogue
 			NextContentID += 10;
 		}
 		
-		public void InsertExecutionEntry (string ycode, int nextID)
+		public void InsertExecutionDBEntry (string ycode, int nextID)
 		{
-			ExecutionEntry toInsert = new ExecutionEntry(NextExecutionID, ycode, nextID);
+			ExecutionDBEntry toInsert = new ExecutionDBEntry(NextExecutionID, ycode, nextID);
 			try
 			{
 				_connection.Insert(toInsert);
@@ -673,9 +772,9 @@ namespace Mistral.UniDialogue
 			NextExecutionID += 10;
 		}
 		
-		public void InsertConditionEntry (string ycode, int sucID, int nextID)
+		public void InsertConditionDBEntry (string ycode, int sucID, int nextID)
 		{
-			ConditionEntry toInsert = new ConditionEntry(NextConditionID, ycode, sucID, nextID);
+			ConditionDBEntry toInsert = new ConditionDBEntry(NextConditionID, ycode, sucID, nextID);
 			try
 			{
 				_connection.Insert(toInsert);
@@ -690,7 +789,83 @@ namespace Mistral.UniDialogue
 			NextConditionID += 10;
 		}
 		
+		public void InsertExtensionDBEntry (string ids)
+		{
+			ExtensionDBEntry toInsert = new ExtensionDBEntry(NextExtensionID, ids);
+			try
+			{
+				_connection.Insert(toInsert);
+			}
+			catch (SQLiteException sex)
+			{
+				Debug.Log("Entry is not inserted. An error has occured. Check the constraints of the database scheme. "
+					+ "The Result is: " + sex.Result
+					+ "The Message is: " + sex.Message);
+				throw;
+			}
+			NextExtensionID += 10;
+		}
+		
 		//These Methods are not welcomed to use ... However in test mode or some situations they could be pretty handy ...
+		
+		/// <summary>
+		/// Get the DialogueEntryByID. 
+		/// </summary>
+		/// <returns>The entry by I.</returns>
+		/// <param name="id">Identifier.</param>
+		public DialogueDBEntry GetEntryByID (int id)
+		{
+			EntryType type = (EntryType) (id % 10);
+			
+			DialogueDBEntry ret;
+			
+			switch (type)
+			{
+				case EntryType.Content: 
+					ret = _connection.Query<ContentDBEntry>("SELECT * FROM ContentDBEntry WHERE ID = " + id)[0];
+					break;
+				case EntryType.Condition:
+					ret = _connection.Query<ConditionDBEntry>("SELECT * FROM ConditionDBEntry WHERE ID = " + id)[0];
+					break;
+				case EntryType.Execution:
+					ret = _connection.Query<ExecutionDBEntry>("SELECT * FROM ExecutionDBEntry WHERE ID = " + id)[0];
+					break;
+				case EntryType.Extension:
+					ret = _connection.Query<ExtensionDBEntry>("SELECT * FROM ExtensionDBEntry WHERE ID = " + id)[0];
+					break;
+				default :
+					ret = null;
+					break;
+			}
+			
+			return ret;
+		}
+		
+		/// <summary>
+		/// Returns the Next DialogueDBEntry of the Selected Entry.
+		/// If the entry is an Extension Entry, or it is the end of the entry chain, a null would be returned. 
+		/// And the corresponding warning message would be displayed. 
+		/// </summary>
+		/// <returns>The next entry.</returns>
+		/// <param name="entry">Entry.</param>
+		public DialogueDBEntry GetNextEntry (DialogueDBEntry entry)
+		{
+			int id = entry.GetNextID();
+			if (id == -1)
+			{
+				if (entry.GetEntryType() == EntryType.Extension)
+				{
+					Debug.Log("Warning - You are trying to get the Next Entry of an extension entry! ");
+					return null;
+				}
+				else
+				{
+					Debug.Log("This Entry does not have a next ID. ");
+					return null;
+				}
+			}
+			return GetEntryByID (id);
+		}
 		
 		#endregion
 	}
