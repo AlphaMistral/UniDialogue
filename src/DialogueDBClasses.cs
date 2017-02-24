@@ -77,6 +77,7 @@ namespace Mistral.UniDialogue
         /// <summary>
         /// The name of the Conversation.
         /// </summary>
+		[Unique]
         public string ConversationName { get; private set; }
 
         /// <summary>
@@ -601,42 +602,17 @@ namespace Mistral.UniDialogue
 			
 		}
 		
+		public DialogueDBManager (string dbName, SQLiteOpenFlags flag)
+		{
+			_connection = new DialogueDBConnection(dbName, flag);
+			Update();
+		}
+		
 		public DialogueDBManager (DialogueDBConnection con)
 		{
 			_connection = con;
 			
-			///Get the Rows with maximum ID. 
-			ConversationDBEntry _maxConversationDBEntry = _connection.Query<ConversationDBEntry>("SELECT *, MAX(ID) FROM ConversationDBEntry")[0];
-			ContentDBEntry _maxContentDBEntry = _connection.Query<ContentDBEntry>("SELECT *, MAX(ID) FROM ContentDBEntry")[0];
-			ExecutionDBEntry _maxExecutionDBEntry = _connection.Query<ExecutionDBEntry>("SELECT *, MAX(ID) FROM ExecutionDBEntry")[0];
-			ConditionDBEntry _maxConditionDBEntry = _connection.Query<ConditionDBEntry>("SELECT *, MAX(ID) FROM ConditionDBEntry")[0];
-			ExtensionDBEntry _maxExtensionDBEntry = _connection.Query<ExtensionDBEntry>("SELECT *, MAX(ID) FROM ExtensionDBEntry")[0];
-			
-			///And then set the IDs to the Manager. If a table is empty, then set the start ID. 
-			if (_maxConversationDBEntry.ID != 0)
-				NextConversationID = _maxConversationDBEntry.ID + 1;
-			else
-				NextConversationID = 1;
-			
-			if (_maxContentDBEntry.ID != 0)
-				NextContentID = _maxContentDBEntry.ID + 10;
-			else
-				NextContentID = 1;
-			
-			if (_maxExecutionDBEntry.ID != 0)
-				NextExecutionID = _maxExecutionDBEntry.ID + 10;
-			else
-				NextExecutionID = 2;
-			
-			if (_maxConditionDBEntry.ID != 0)
-				NextConditionID = _maxConditionDBEntry.ID + 10;
-			else
-				NextConditionID = 3;
-			
-			if (_maxExtensionDBEntry.ID != 0)
-				NextExtensionID = _maxExtensionDBEntry.ID + 10;
-			else
-				NextExtensionID = 4;
+			Update();
 		}
 		
 		#endregion
@@ -808,6 +784,61 @@ namespace Mistral.UniDialogue
 		
 		//These Methods are not welcomed to use ... However in test mode or some situations they could be pretty handy ...
 		
+		#endregion 
+		
+		#region Public Methods
+		
+		/// <summary>
+		/// Updates the Manager's Varirables
+		/// </summary>
+		public void Update ()
+		{
+			///Get the Rows with maximum ID. 
+			ConversationDBEntry _maxConversationDBEntry = _connection.Query<ConversationDBEntry>("SELECT *, MAX(ID) FROM ConversationDBEntry")[0];
+			ContentDBEntry _maxContentDBEntry = _connection.Query<ContentDBEntry>("SELECT *, MAX(ID) FROM ContentDBEntry")[0];
+			ExecutionDBEntry _maxExecutionDBEntry = _connection.Query<ExecutionDBEntry>("SELECT *, MAX(ID) FROM ExecutionDBEntry")[0];
+			ConditionDBEntry _maxConditionDBEntry = _connection.Query<ConditionDBEntry>("SELECT *, MAX(ID) FROM ConditionDBEntry")[0];
+			ExtensionDBEntry _maxExtensionDBEntry = _connection.Query<ExtensionDBEntry>("SELECT *, MAX(ID) FROM ExtensionDBEntry")[0];
+
+			///And then set the IDs to the Manager. If a table is empty, then set the start ID. 
+			if (_maxConversationDBEntry.ID != 0)
+				NextConversationID = _maxConversationDBEntry.ID + 1;
+			else
+				NextConversationID = 1;
+
+			if (_maxContentDBEntry.ID != 0)
+				NextContentID = _maxContentDBEntry.ID + 10;
+			else
+				NextContentID = 1;
+
+			if (_maxExecutionDBEntry.ID != 0)
+				NextExecutionID = _maxExecutionDBEntry.ID + 10;
+			else
+				NextExecutionID = 2;
+
+			if (_maxConditionDBEntry.ID != 0)
+				NextConditionID = _maxConditionDBEntry.ID + 10;
+			else
+				NextConditionID = 3;
+
+			if (_maxExtensionDBEntry.ID != 0)
+				NextExtensionID = _maxExtensionDBEntry.ID + 10;
+			else
+				NextExtensionID = 4;
+		}
+		
+		public void SwitchConnection (DialogueDBConnection con)
+		{
+			_connection.Disconnect();
+			_connection = con;
+		}
+		
+		public void SwitchConnection (string dbName, SQLiteOpenFlags flag)
+		{
+			_connection.Disconnect();
+			_connection.EstablishConnection(dbName, flag);
+		}
+		
 		/// <summary>
 		/// Get the DialogueEntryByID. 
 		/// </summary>
@@ -816,9 +847,9 @@ namespace Mistral.UniDialogue
 		public DialogueDBEntry GetEntryByID (int id)
 		{
 			EntryType type = (EntryType) (id % 10);
-			
+
 			DialogueDBEntry ret;
-			
+
 			switch (type)
 			{
 				case EntryType.Content: 
@@ -837,10 +868,10 @@ namespace Mistral.UniDialogue
 					ret = null;
 					break;
 			}
-			
+
 			return ret;
 		}
-		
+
 		/// <summary>
 		/// Returns the Next DialogueDBEntry of the Selected Entry.
 		/// If the entry is an Extension Entry, or it is the end of the entry chain, a null would be returned. 
@@ -934,8 +965,8 @@ namespace Mistral.UniDialogue
 		/// </summary>
 		public void Disconnect ()
 		{
-			_connection = null;
-			
+			_connection.Close ();
+			GC.Collect();
 			Debug.Log("Disconnected! ");
 		}
 		

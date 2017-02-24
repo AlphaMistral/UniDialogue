@@ -64,12 +64,37 @@ namespace Mistral.UniDialogue
 	/// </summary>
 	public class DialogueManager : MonoBehaviour
 	{
-		#region Public Variables
+		#region Singleton
 		
 		/// <summary>
 		/// Singleton of the Dialogue Manager. 
 		/// </summary>
 		public static DialogueManager instance;
+		
+		#endregion
+		
+		///These Variables are for the DialogueManger Rather than the instance. 
+		#region Static Variables
+		
+		private static DialogueDBManager dbManager;
+		
+		private static ConversationDBEntry currentConversation;
+		
+		#endregion
+		
+		#region Constants
+		
+		
+		
+		#endregion
+		
+		#region Public Variables
+		
+		/// <summary>
+		/// The name of the Database to use.
+		/// Required! 
+		/// </summary>
+		public string dbName;
 		
 		#endregion
 		
@@ -88,6 +113,62 @@ namespace Mistral.UniDialogue
 			{
 				DestroyImmediate(this);
 			}
+		}
+		
+		#endregion
+		
+		#region Public Methods
+		
+		/// <summary>
+		/// Establish a new Connection to an Indicated Database. 
+		/// Please don't do this frequently! 
+		/// A GC is forced to make sure that the database connection is released! 
+		/// </summary>
+		/// <param name="_dbName">Db name.</param>
+		public static void EstablishNewConnection (string _dbName)
+		{
+			instance.dbName = _dbName;
+			dbManager.SwitchConnection(_dbName, SQLiteOpenFlags.ReadOnly);
+		}
+		
+		/// <summary>
+		/// Invokes a new Conversation By the Indicated ID. 
+		/// Not Frequently used. Unless you know exactly the ID of the conversation. 
+		/// </summary>
+		/// <param name="id">Identifier.</param>
+		public static void InvokeNewConversation (int id)
+		{
+			List<ConversationDBEntry> cdbe = dbManager._connection.Query<ConversationDBEntry>("SELECT * FROM ConversationDBEntry WHERE ID = " + id);
+			if (cdbe == null || cdbe.Count == 0)
+			{
+				currentConversation = null;
+				Debug.Log("Warning : The indicated ID does not exist at all! ");
+			}
+			currentConversation = cdbe[0];
+		}
+		
+		/// <summary>
+		/// Invokes a new Conversation By the Name. 
+		/// </summary>
+		/// <param name="name">Name.</param>
+		public static void InvokeNewConversation (string name)
+		{
+			List<ConversationDBEntry> cdbe = dbManager._connection.Query<ConversationDBEntry>("SELECT * FROM ConversationDBEntry WHERE ConversationName = " + name);
+			if (cdbe == null || cdbe.Count == 0)
+			{
+				currentConversation = null;
+				Debug.Log("Warning : The indicated Name does not exist at all! ");
+			}
+			currentConversation = cdbe[0];
+		}
+		
+		#endregion
+		
+		#region Private Methods
+		
+		private static void Initialize ()
+		{
+			dbManager = new DialogueDBManager(instance.dbName, SQLiteOpenFlags.ReadOnly);
 		}
 		
 		#endregion
