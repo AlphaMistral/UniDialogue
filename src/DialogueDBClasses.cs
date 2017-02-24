@@ -898,6 +898,20 @@ namespace Mistral.UniDialogue
 			return GetEntryByID (id);
 		}
 		
+		public List<int> GetExtensionList (ExtensionDBEntry entry)
+		{
+			List<int> ret = new List<int>();
+			
+			string[] strs = entry.IDs.Split('#');
+			
+			foreach (string str in strs)
+			{
+				ret.Add(int.Parse (str));
+			}
+			
+			return ret;
+		}
+		
 		#endregion
 	}
 

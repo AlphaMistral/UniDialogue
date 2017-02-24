@@ -80,6 +80,8 @@ namespace Mistral.UniDialogue
 		
 		private static ConversationDBEntry currentConversation;
 		
+		private static DialogueDBEntry currentEntry;
+		
 		#endregion
 		
 		#region Constants
@@ -129,6 +131,7 @@ namespace Mistral.UniDialogue
 		{
 			instance.dbName = _dbName;
 			dbManager.SwitchConnection(_dbName, SQLiteOpenFlags.ReadOnly);
+			currentEntry = null;
 		}
 		
 		/// <summary>
@@ -145,6 +148,7 @@ namespace Mistral.UniDialogue
 				Debug.Log("Warning : The indicated ID does not exist at all! ");
 			}
 			currentConversation = cdbe[0];
+			currentEntry = null;
 		}
 		
 		/// <summary>
@@ -160,6 +164,50 @@ namespace Mistral.UniDialogue
 				Debug.Log("Warning : The indicated Name does not exist at all! ");
 			}
 			currentConversation = cdbe[0];
+			currentEntry = null;
+		}
+		
+		public static ContentEntry GetCurrentContent ()
+		{
+			if (currentEntry == null || currentEntry.GetEntryType() != EntryType.Content)
+				return null;
+			
+			return EncodeContentEntry(currentEntry as ContentDBEntry);
+		}
+		
+		public static List<ContentEntry> GetAllContents ()
+		{
+			if (currentEntry == null)
+				return null;
+			List<ContentEntry> ret = new List<ContentEntry>();
+			
+			if (currentEntry.GetEntryType() == EntryType.Content)
+			{
+				ret.Add(GetCurrentContent());
+			}
+			else if (currentEntry.GetEntryType() == EntryType.Extension)
+			{
+				List<int> ids = dbManager.GetExtensionList(currentEntry as ExtensionDBEntry);
+				///Please note currently we ignore condition entries and execution entries! 
+				for (int i = 0, imax = ids.Count; i < imax; i++)
+				{
+					int id = ids[i];
+					ContentDBEntry dbEntry = dbManager.GetEntryByID(id) as ContentDBEntry;
+					ret.Add(EncodeContentEntry(dbEntry));
+				}
+			}
+			
+			return ret;
+		}
+		
+		public static void MoveToNextEntry (ContentEntry entry)
+		{
+			int id = entry.NextID;
+			
+			if (id == -1)
+				currentEntry = null;
+			else
+				currentEntry = dbManager.GetEntryByID(entry.NextID);
 		}
 		
 		#endregion
@@ -168,7 +216,13 @@ namespace Mistral.UniDialogue
 		
 		private static void Initialize ()
 		{
+			currentEntry = null;
 			dbManager = new DialogueDBManager(instance.dbName, SQLiteOpenFlags.ReadOnly);
+		}
+		
+		private static ContentEntry EncodeContentEntry (ContentDBEntry entry)
+		{
+			return new ContentEntry(entry.ID, entry.NextEntryID, entry.Actor, entry.Content);
 		}
 		
 		#endregion
